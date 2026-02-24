@@ -1,3 +1,97 @@
+كود الحفظ
+[HttpPost]
+public ActionResult SaveOption(int MeetingId, string OptionName, List<string> Pros, List<string> Cons)
+{
+    using (var db = new AppDbContext())
+    {
+        // إنشاء الخيار وربطه بالاجتماع
+        var option = new Options
+        {
+            MeetingId = MeetingId,
+            OptionName = OptionName
+        };
+
+        db.Options.Add(option);
+        db.SaveChanges();
+
+        // حفظ الإيجابيات
+        foreach (var p in Pros)
+        {
+            db.OptionDetails.Add(new OptionDetails
+            {
+                OptionId = option.Id,
+                DetailText = p,
+                DetailType = 1
+            });
+        }
+
+        // حفظ السلبيات
+        foreach (var c in Cons)
+        {
+            db.OptionDetails.Add(new OptionDetails
+            {
+                OptionId = option.Id,
+                DetailText = c,
+                DetailType = 2
+            });
+        }
+
+        db.SaveChanges();
+
+        return Json(new { success = true, id = option.Id });
+    }
+}
+-------------------------
+كود التعديل
+[HttpPost]
+public ActionResult UpdateOption(int Id, int MeetingId, string OptionName, List<string> Pros, List<string> Cons)
+{
+    using (var db = new AppDbContext())
+    {
+        var option = db.Options.FirstOrDefault(x => x.Id == Id && x.MeetingId == MeetingId);
+
+        if (option == null)
+            return Json(new { success = false });
+
+        option.OptionName = OptionName;
+
+        // حذف التفاصيل القديمة
+        var oldDetails = db.OptionDetails.Where(x => x.OptionId == Id).ToList();
+        db.OptionDetails.RemoveRange(oldDetails);
+
+        // إضافة الإيجابيات الجديدة
+        foreach (var p in Pros)
+        {
+            db.OptionDetails.Add(new OptionDetails
+            {
+                OptionId = Id,
+                DetailText = p,
+                DetailType = 1
+            });
+        }
+
+        // إضافة السلبيات الجديدة
+        foreach (var c in Cons)
+        {
+            db.OptionDetails.Add(new OptionDetails
+            {
+                OptionId = Id,
+                DetailText = c,
+                DetailType = 2
+            });
+        }
+
+        db.SaveChanges();
+
+        return Json(new { success = true, id = Id });
+    }
+}
+
+
+
+
+-----------------------------------------------------------
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
